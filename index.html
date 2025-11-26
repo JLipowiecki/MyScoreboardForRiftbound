@@ -1,11 +1,420 @@
-Project Summary
-Scoreboard for Riftbound is a simple score-tracking tool for Riftbound matches. It replaces basic calculators commonly used during local events and provides a clear interface for adding or removing points, selecting legends, and randomly selecting which player starts the game.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scoreboard For Riftbound</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0e16;
+      --card: #101627;
+      --muted: #cfd6e6;
+      --primary: #7c5dff;
+      --primary-dark: #4d3aba;
+      --accent: #5de1ff;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      --radius: 20px;
+    }
 
-Use of Riot API
-At the moment, legend images are stored locally as PNG files. Once API access is granted, the app will automatically fetch legend data and artwork directly from the official Riot endpoints to ensure accuracy and up-to-date assets.
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-Purpose
-The app is intended solely to improve player experience during tabletop Riftbound matches by offering accurate score tracking.
+    body {
+      font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(92, 64, 255, 0.15), transparent 30%),
+                  radial-gradient(circle at 90% 10%, rgba(93, 225, 255, 0.12), transparent 28%),
+                  radial-gradient(circle at 40% 80%, rgba(255, 126, 186, 0.12), transparent 25%),
+                  var(--bg);
+      color: #e9ecf6;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-Additional Notes
-A downloadable prototype of the application is already available for testing. API access for Riftbound is requested to ensure the app can display accurate, official legend data and stay up to date with any future content.The final version of the application is planned for release on the Google Play Store once API integration is completed.
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .wrapper {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+
+    .brand .glow-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      box-shadow: 0 0 12px rgba(93, 225, 255, 0.7);
+    }
+
+    nav ul {
+      display: flex;
+      gap: 14px;
+      list-style: none;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    nav a {
+      padding: 8px 12px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover {
+      background: rgba(124, 93, 255, 0.12);
+      color: #fff;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      align-items: center;
+      padding: 32px 0 40px;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(32px, 6vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -0.6px;
+      font-family: 'Poppins', 'Inter', sans-serif;
+      margin-bottom: 16px;
+    }
+
+    .hero-copy p {
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 17px;
+      margin-bottom: 22px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 13px 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      border: 1px solid transparent;
+      transition: transform 0.25s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #0d0f17;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 12px 30px rgba(124, 93, 255, 0.45);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border-color: rgba(124, 93, 255, 0.35);
+      box-shadow: none;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      background: rgba(93, 225, 255, 0.08);
+    }
+
+    .phone-frame {
+      position: relative;
+      width: min(380px, 90vw);
+      margin: 0 auto;
+      padding: 14px;
+      border-radius: 36px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      transform: rotate(-6deg);
+    }
+
+    .phone-inner {
+      overflow: hidden;
+      border-radius: 26px;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.04);
+    }
+
+    .phone-inner img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .section {
+      margin-top: 64px;
+      padding: 32px;
+      background: rgba(16, 22, 39, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(124, 93, 255, 0.07), transparent);
+      pointer-events: none;
+    }
+
+    .section h2 {
+      font-size: clamp(26px, 4vw, 34px);
+      font-family: 'Poppins', 'Inter', sans-serif;
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+
+    .section p {
+      color: var(--muted);
+      max-width: 840px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 26px;
+      align-items: center;
+    }
+
+    .section .phone-frame {
+      transform: rotate(-2deg);
+      background: linear-gradient(180deg, rgba(93, 225, 255, 0.16), rgba(124, 93, 255, 0.08));
+    }
+
+    .legend-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .card strong {
+      color: #fff;
+      font-size: 16px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .card span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .cta-footer {
+      margin-top: 70px;
+      text-align: center;
+      background: linear-gradient(145deg, rgba(124, 93, 255, 0.15), rgba(93, 225, 255, 0.1));
+      padding: 32px 24px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: var(--shadow);
+    }
+
+    .cta-footer h3 {
+      font-size: 26px;
+      margin-bottom: 14px;
+      letter-spacing: -0.3px;
+    }
+
+    .cta-footer p {
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    footer {
+      margin-top: 28px;
+      padding: 18px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    @media (min-width: 900px) {
+      .hero {
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 48px;
+      }
+
+      .split {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+
+      .section {
+        padding: 40px 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div class="brand">
+        <span class="glow-dot"></span>
+        <span>Scoreboard for Riftbound</span>
+      </div>
+      <nav aria-label="Primary Navigation">
+        <ul>
+          <li><a href="#summary">About</a></li>
+          <li><a href="#legend">Legends</a></li>
+          <li><a href="#notes">Release Plan</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <h1>Scoreboard For Riftbound</h1>
+        <p>A clean and intuitive score-tracking app for Riftbound players.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="ScoreboardForRiftbound.apk" download>Download Prototype (APK)</a>
+          <a class="btn btn-ghost" href="#" target="_blank" rel="noreferrer">View on GitHub</a>
+        </div>
+      </div>
+      <div class="phone-frame" aria-label="Random player selector screenshot">
+        <div class="phone-inner">
+          <img src="randomPlayer.jpg" alt="Random player selector screen" loading="lazy">
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="summary">
+      <div class="split">
+        <div>
+          <h2>What the App Does</h2>
+          <p><strong>Project Summary</strong><br>
+            Scoreboard for Riftbound is a simple score-tracking tool for Riftbound matches. It replaces basic calculators commonly used during local events and provides a clear interface for adding or removing points, selecting legends, and randomly selecting which player starts the game.
+          </p>
+        </div>
+        <div class="phone-frame" aria-label="Score tracking screenshot">
+          <div class="phone-inner">
+            <img src="countingScore.jpg" alt="Score tracking screen" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="legend">
+      <div class="split">
+        <div>
+          <h2>Choose Your Legend</h2>
+          <p>Players can choose which legend they are playing through a clean selection interface. Legend images are currently stored locally, but once API access is granted, the app will automatically fetch official artwork directly from Riot’s API.</p>
+          <div class="legend-gallery">
+            <div class="card">
+              <div class="glow-dot" style="flex-shrink:0;"></div>
+              <div>
+                <strong>Clean selection</strong>
+                <span>Switch legends quickly to keep games flowing.</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="glow-dot" style="flex-shrink:0;"></div>
+              <div>
+                <strong>Local assets now</strong>
+                <span>PNG artwork stored on-device for instant loading.</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="glow-dot" style="flex-shrink:0;"></div>
+              <div>
+                <strong>API-ready</strong>
+                <span>Designed to pull official legend art when access is granted.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-frame" aria-label="Legend selection screenshot">
+          <div class="phone-inner">
+            <img src="chooseLegend.jpg" alt="Legend selection screen" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="api">
+      <h2>Planned API Integration</h2>
+      <p><strong>Use of Riot API</strong><br>
+        At the moment, legend images are stored locally as PNG files. Once API access is granted, the app will automatically fetch legend data and artwork directly from the official Riot endpoints to ensure accuracy and up-to-date assets.
+      </p>
+    </section>
+
+    <section class="section" id="purpose">
+      <h2>Purpose</h2>
+      <p>The app is intended solely to improve player experience during tabletop Riftbound matches by offering accurate score tracking.</p>
+    </section>
+
+    <section class="section" id="notes">
+      <h2>Notes & Release Plan</h2>
+      <p><strong>Additional Notes</strong><br>
+        A downloadable prototype of the application is already available for testing. API access for Riftbound is requested to ensure the app can display accurate, official legend data and stay up to date with any future content.<br><br>
+        The final version of the application is planned for release on the Google Play Store once API integration is completed.
+      </p>
+    </section>
+
+    <div class="cta-footer" id="cta">
+      <h3>Experience the Scoreboard</h3>
+      <p>Download the prototype, follow development, or reach out to the creator.</p>
+      <div class="hero-actions" style="justify-content:center;">
+        <a class="btn btn-primary" href="ScoreboardForRiftbound.apk" download>Download Prototype</a>
+        <a class="btn btn-ghost" href="#" target="_blank" rel="noreferrer">Follow Development</a>
+        <a class="btn btn-ghost" href="#" target="_blank" rel="noreferrer">Contact Developer</a>
+      </div>
+    </div>
+
+    <footer>
+      © 2024 Scoreboard for Riftbound. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>
